@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>İyi ki Doğdun Cenker!</title>
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Poppins:wght@300;500&display=swap");
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #2a2a45, #151524);
+      font-family: "Poppins", sans-serif;
+      overflow: hidden;
+    }
+
+    /* Konfeti Canvas */
+    #confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .container {
+      position: relative;
+      width: 320px;
+      height: 220px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      perspective: 1200px; /* 🔥 3D daha iyi */
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Zarf gövde */
+    .envelope-body {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #b53026, #d7443a);
+      border-radius: 10px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* Zarf iç gölge */
+    .envelope-body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(0,0,0,0.15), transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Mektup */
+    .letter {
+      position: absolute;
+      bottom: 10px;
+      width: 92%;
+      height: 88%;
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+
+      overflow: hidden;
+
+      /* 🔥 Kapalıyken saklanma */
+      transform: translateY(75px) scale(0.96);
+      opacity: 0;
+
+      /* Animasyon */
+      transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                  height 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.35s ease;
+
+      z-index: 2;
+    }
+
+    /* Kağıt üst kısmına hafif doku */
+    .letter::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.03), transparent 40%);
+      pointer-events: none;
+    }
+
+    .letter h1 {
+      font-family: "Dancing Script", cursive;
+      color: #c0392b;
+      margin: 6px 0 6px;
+      font-size: 26px;
+    }
+
+    .letter p {
+      font-size: 12.5px;
+      color: #333;
+      line-height: 1.45;
+      margin: 0;
+      padding: 0 4px;
+    }
+
+    .signature {
+      margin-top: auto;
+      font-weight: 600;
+      font-size: 12px;
+      color: #555;
+      align-self: flex-end;
+      padding-top: 10px;
+    }
+
+    /* Zarf cep (alt üçgen) */
+    .pocket {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 160px solid transparent;
+      border-right: 160px solid transparent;
+      border-bottom: 130px solid #ff5a4f;
+      z-index: 4;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25));
+    }
+
+    /* Cep üstüne hafif parlaklık */
+    .pocket::after {
+      content: "";
+      position: absolute;
+      left: -160px;
+      top: 0;
+      width: 0;
+      height: 0;
+      border-left: 160px solid transparent;
+      border-right: 160px solid transparent;
+      border-bottom: 130px solid rgba(255,255,255,0.06);
+      transform: translateY(-2px);
+      pointer-events: none;
+    }
+
+    /* Üst kapak */
+    .lid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 160px solid transparent;
+      border-right: 160px solid transparent;
+      border-top: 120px solid #c0392b;
+      transform-origin: top;
+      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 6;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.25));
+      backface-visibility: hidden;
+    }
+
+    /* Kapak parlaklık */
+    .lid::after {
+      content: "";
+      position: absolute;
+      left: -160px;
+      top: -120px;
+      width: 0;
+      height: 0;
+      border-left: 160px solid transparent;
+      border-right: 160px solid transparent;
+      border-top: 120px solid rgba(255,255,255,0.06);
+      pointer-events: none;
+    }
+
+    /* Açılma animasyonu */
+    .container.open .lid {
+      transform: rotateX(180deg);
+      z-index: 1; /* arkaya düşsün */
+    }
+
+    .container.open .letter {
+      transform: translateY(-95px) scale(1);
+      height: 300px;
+      opacity: 1;
+      z-index: 10;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.25);
+    }
+
+    /* Tıklama ipucu */
+    .hint {
+      position: absolute;
+      bottom: -58px;
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 14px;
+      animation: bounce 1.5s infinite;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      letter-spacing: 0.2px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    /* Açıkken ipucunu kaldır */
+    .container.open .hint {
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+    }
+
+    /* Minik "pulse" efekti (kapalıyken) */
+    .container:not(.open) {
+      animation: pulse 2.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.01); }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="confetti"></canvas>
+
+  <div class="container" id="envelope">
+    <div class="envelope-body"></div>
+
+    <div class="letter">
+      <h1>İyi ki Doğdun Cenker!</h1>
+      <p>
+        Kardeşim Cenker,<br />
+        9. sınıftan beri süren dostluğumuz benim için çok değerli.
+        Birlikte büyüdük, güldük, saçmaladık. İyi günümde kötü günümde hep yanımdaydın.
+        <br /><br />
+        Yeni yaşında her şey gönlünce olsun. Nice mutlu senelere!
+      </p>
+
+      <div class="signature">
+        Dostun,<br />
+        Efe
+      </div>
+    </div>
+
+    <div class="pocket"></div>
+    <div class="lid"></div>
+
+    <div class="hint">Açmak için dokun 📩</div>
+  </div>
+
+  <script>
+    const envelope = document.getElementById("envelope");
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+
+    let isOpen = false;
+    let particles = [];
+    let animationId = null;
+
+    const colors = ["#f1c40f", "#e74c3c", "#3498db", "#9b59b6", "#2ecc71", "#ffffff"];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function createParticle() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height, // yukarıdan gelsin
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speedY: Math.random() * 3 + 2,
+        speedX: Math.random() * 2 - 1,
+        rotation: Math.random() * 360,
+        rotationSpeed: Math.random() * 10 - 5,
+        shape: Math.random() > 0.5 ? "rect" : "circle",
+        life: 0
+      };
+    }
+
+    function spawnConfetti(count = 180) {
+      for (let i = 0; i < count; i++) {
+        particles.push(createParticle());
+      }
+    }
+
+    function updateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+
+        p.y += p.speedY;
+        p.x += p.speedX;
+        p.rotation += p.rotationSpeed;
+        p.life++;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+
+        if (p.shape === "rect") {
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+
+        // Ekrandan çıkınca sil
+        if (p.y > canvas.height + 30 || p.x < -30 || p.x > canvas.width + 30) {
+          particles.splice(i, 1);
+        }
+      }
+
+      if (particles.length > 0) {
+        animationId = requestAnimationFrame(updateParticles);
+      } else {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    }
+
+    function startConfetti() {
+      spawnConfetti(200);
+      if (!animationId) updateParticles();
+    }
+
+    envelope.addEventListener("click", () => {
+      if (!isOpen) {
+        envelope.classList.add("open");
+        startConfetti();
+        isOpen = true;
+      } else {
+        envelope.classList.remove("open");
+        isOpen = false;
+      }
+    });
+  </script>
+</body>
+</html>
